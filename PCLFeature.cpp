@@ -66,11 +66,8 @@ std::vector<std::string> split(const std::string &s, char delim) {
 }
 
 
-void readDepth(string fname)
+vector< vector<int> > readDepth(string fname, vector<Point2D> &jointV, int& width, int& height)
 {
-    int width = 0;
-    int height = 0;
-    vector<Point2D> jointV;
     vector< vector<int> > rawDepthV;
     // open input text file
     ifstream input_f(fname.c_str());
@@ -110,28 +107,48 @@ void readDepth(string fname)
                 tmpLineV.push_back(atoi(tmpV[i].c_str()));
             rawDepthV.push_back(tmpLineV);
         }
-
-        for(int i=0;i<rawDepthV.size();i++)
-        {
-            vector<int> tmpV = rawDepthV[i];
-            for(int j=0;j<tmpV.size();j++)
-                cout << tmpV[j] << " " ;
-            cout << endl;
-        }
-
+        
+        return rawDepthV;
     }
 }
 
 int main(int argc, char** argv)
 {
     // initialize point cloud
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
-
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+    vector< vector<int> > rawDepthV;
+    vector<Point2D> jointV;
+    vector<Point2D> &passJointV = jointV;
+    int width = 0;
+    int height = 0;
+    int& passW = width;
+    int& passH = height;
+    
 
     // read input text filename from argmuments
     string fname = argv[1];
-    cout << fname << endl;
-    readDepth(fname);
+    cout << "Read file " << fname << endl;
+    rawDepthV = readDepth(fname, passJointV, passW, passH);
+
+    cloud->width = width;
+    cloud->height = height;
+    cloud->points.resize( cloud->width * cloud->height);
+    
+    for(int i=0;i<rawDepthV.size();i++)
+    {
+        vector<int> lineV = rawDepthV[i];
+        int baseIndex = width * i;
+        for(int j = 0 ; j < lineV.size() ; j++)
+        {
+            int finalIndex = baseIndex + j;
+            cloud->points[finalIndex].x = j;
+            cloud->points[finalIndex].y = i;
+            cloud->points[finalIndex].z = lineV[j];
+        }
+    }
+    
+    pcl::io::savePCDFileASCII("test_pcd.pcd", *cloud);
+
 
     /*
 
