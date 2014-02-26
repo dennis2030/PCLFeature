@@ -1,0 +1,2 @@
+convert2RangeImage:
+	g++ convert2RangeImage.cpp -g -o convert2RangeImage 
